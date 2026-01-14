@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -10,9 +11,21 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 )
 
-const rootPath = "/mnt/MOBILEDISK1/吉他/卓著谱"
+type Config struct {
+	Server struct {
+		Port     int    `yaml:"port"`
+		RootPath string `yaml:"root_path"`
+	} `yaml:"server"`
+	Site struct {
+		Title           string `yaml:"title"`
+		OpenInNewWindow bool   `yaml:"open_in_new_window"`
+	} `yaml:"site"`
+}
+
+var config Config
 
 type FileInfo struct {
 	Name    string
@@ -28,19 +41,30 @@ type Breadcrumb struct {
 }
 
 func main() {
+	// Load config
+	configData, err := os.ReadFile("config.yaml")
+	if err != nil {
+		log.Fatal("读取配置文件失败: ", err)
+	}
+	if err := yaml.Unmarshal(configData, &config); err != nil {
+		log.Fatal("解析配置文件失败: ", err)
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/*path", handleRequest)
 
-	log.Println("文件服务启动：http://0.0.0.0:8085")
-	log.Fatal(r.Run(":8085"))
+	addr := fmt.Sprintf(":%d", config.Server.Port)
+	log.Printf("文件服务启动：http://0.0.0.0%s", addr)
+	log.Fatal(r.Run(addr))
 }
 
 func handleRequest(c *gin.Context) {
 	reqPath := c.Param("path")
 	query := c.Query("q")
+	rootPath := config.Server.RootPath
 
 	// Clean and validate path
 	cleanPath := filepath.Clean(reqPath)
@@ -89,7 +113,7 @@ func handleRequest(c *gin.Context) {
 
 	// If search query exists, use fdfind
 	if query != "" {
-		files = searchWithFd(query)
+		files = searchWithFd(query, rootPath)
 	} else {
 		// Read directory
 		entries, err := os.ReadDir(fullPath)
@@ -129,14 +153,16 @@ func handleRequest(c *gin.Context) {
 	}
 
 	c.HTML(200, "index.html", gin.H{
-		"Files":       files,
-		"Breadcrumbs": breadcrumbs,
-		"Parent":      parent,
-		"Query":       query,
+		"Files":           files,
+		"Breadcrumbs":     breadcrumbs,
+		"Parent":          parent,
+		"Query":           query,
+		"Title":           config.Site.Title,
+		"OpenInNewWindow": config.Site.OpenInNewWindow,
 	})
 }
 
-func searchWithFd(query string) []FileInfo {
+func searchWithFd(query string, rootPath string) []FileInfo {
 	var files []FileInfo
 
 	cmd := exec.Command("/usr/bin/fdfind", "-i", query, rootPath)

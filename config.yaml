@@ -1,0 +1,12 @@
+# 文件服务器配置
+server:
+  # 监听端口
+  port: 8085
+  # 文件根目录
+  root_path: /mnt/MOBILEDISK1/吉他/卓著谱
+
+site:
+  # 网站标题
+  title: FILE ARCHIVE
+  # 是否在新窗口打开文件
+  open_in_new_window: true

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>File Archive</title>
+    <title>{{.Title}}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; background: #fff; }
@@ -59,8 +59,10 @@
     <div class="header">
         <div class="header-left">
             <div class="logo">
-                <span class="logo-icon">&#127970;</span>
-                <span class="logo-text">FILE<br>ARCHIVE</span>
+                <a href="/" style="color: #fff; text-decoration: none;">
+                    <span class="logo-icon">&#127970;</span>
+                    <span class="logo-text">{{.Title}}</span>
+                </a>
             </div>
         </div>
         <div class="header-right">
@@ -96,7 +98,7 @@
                     {{if .IsDir}}
                     <span class="icon">[&#128193;]</span><a href="{{.Link}}">{{.Name}}</a>
                     {{else}}
-                    <span class="icon">[&#128196;]</span><a href="{{.Link}}">{{.Name}}</a>
+                    <span class="icon">[&#128196;]</span><a href="{{.Link}}"{{if $.OpenInNewWindow}} target="_blank"{{end}}>{{.Name}}</a>
                     {{end}}
                 </td>
                 <td>{{.ModTime}}</td>
