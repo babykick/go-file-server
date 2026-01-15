@@ -236,7 +236,22 @@ func searchWithFd(query string, rootPath string) []FileInfo {
 }
 
 func formatSize(size int64) string {
-	return formatNumber(size)
+	const (
+		KB = 1024
+		MB = 1024 * KB
+		GB = 1024 * MB
+	)
+
+	switch {
+	case size >= GB:
+		return fmt.Sprintf("%.1fG", float64(size)/float64(GB))
+	case size >= MB:
+		return fmt.Sprintf("%.1fM", float64(size)/float64(MB))
+	case size >= KB:
+		return fmt.Sprintf("%.1fK", float64(size)/float64(KB))
+	default:
+		return fmt.Sprintf("%d", size)
+	}
 }
 
 func formatNumber(n int64) string {
