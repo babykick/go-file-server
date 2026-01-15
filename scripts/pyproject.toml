@@ -1,0 +1,10 @@
+[project]
+name = "mytab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pypinyin>=0.55.0",
+    "typer>=0.21.1",
+]
