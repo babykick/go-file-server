@@ -30,6 +30,13 @@
             font-weight: bold;
             line-height: 1.2;
         }
+        .nav-link {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 14px;
+        }
+        .nav-link:hover { text-decoration: underline; }
         .search-box {
             padding: 5px 10px;
             border: 1px solid #ccc;
@@ -41,7 +48,7 @@
             padding: 5px 10px;
             cursor: pointer;
         }
-        .container { padding: 20px; max-width: 900px; }
+        .container { padding: 20px; max-width: 1000px; }
         .breadcrumb { margin-bottom: 15px; font-size: 14px; }
         .breadcrumb a { color: #0000EE; text-decoration: underline; }
         table { border-collapse: collapse; width: 100%; }
@@ -49,10 +56,22 @@
         th { background: #f5f5f5; font-weight: normal; }
         td.size { text-align: right; }
         th.size { text-align: right; }
+        td.features { text-align: center; width: 60px; }
+        th.features { text-align: center; width: 60px; }
         a { color: #0000EE; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .icon { margin-right: 5px; font-family: monospace; }
         .no-results { padding: 20px; color: #666; }
+        .star-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+        }
+        .star-btn:hover { transform: scale(1.2); }
+        .star-empty { color: #ccc; }
+        .star-filled { color: #f5c518; }
     </style>
 </head>
 <body>
@@ -63,6 +82,7 @@
                     <span class="logo-icon">&#127970;</span>
                     <span class="logo-text">{{.Title}}</span>
                 </a>
+                <a href="/favorites" class="nav-link">&#11088; 收藏夹</a>
             </div>
         </div>
         <div class="header-right">
@@ -74,9 +94,13 @@
     </div>
     <div class="container">
         <div class="breadcrumb">
+            {{if .IsFavoritesPage}}
+            <a href="/">Home</a> / 收藏夹
+            {{else}}
             <a href="/">Home</a>
             {{range .Breadcrumbs}}
                 / <a href="{{.Path}}">{{.Name}}</a>
+            {{end}}
             {{end}}
         </div>
         <table>
@@ -84,12 +108,14 @@
                 <th>file</th>
                 <th>last modified</th>
                 <th class="size">size</th>
+                <th class="features">features</th>
             </tr>
             {{if .Parent}}
             <tr>
                 <td><span class="icon">[&#128193;]</span><a href="{{.Parent}}">..</a></td>
                 <td>-</td>
                 <td class="size">-</td>
+                <td class="features"></td>
             </tr>
             {{end}}
             {{range .Files}}
@@ -103,13 +129,48 @@
                 </td>
                 <td>{{.ModTime}}</td>
                 <td class="size">{{.Size}}</td>
+                <td class="features">
+                    <button class="star-btn {{if .IsFavorite}}star-filled{{else}}star-empty{{end}}" 
+                            onclick="toggleFavorite(this, '{{.Link}}', '{{.Name}}')"
+                            title="{{if .IsFavorite}}取消收藏{{else}}添加到收藏夹{{end}}">
+                        {{if .IsFavorite}}&#9733;{{else}}&#9734;{{end}}
+                    </button>
+                </td>
             </tr>
             {{else}}
             {{if not .Parent}}
-            <tr><td colspan="3" class="no-results">No files found</td></tr>
+            <tr><td colspan="4" class="no-results">No files found</td></tr>
             {{end}}
             {{end}}
         </table>
     </div>
+    <script>
+        function toggleFavorite(btn, path, name) {
+            const isFavorite = btn.classList.contains('star-filled');
+            const method = isFavorite ? 'DELETE' : 'POST';
+            
+            fetch('/api/favorite', {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: decodeURIComponent(path), name: name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (isFavorite) {
+                        btn.classList.remove('star-filled');
+                        btn.classList.add('star-empty');
+                        btn.innerHTML = '&#9734;';
+                        btn.title = '添加到收藏夹';
+                    } else {
+                        btn.classList.remove('star-empty');
+                        btn.classList.add('star-filled');
+                        btn.innerHTML = '&#9733;';
+                        btn.title = '取消收藏';
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
